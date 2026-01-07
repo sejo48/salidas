@@ -24,6 +24,8 @@ export default function App() {
     { id: 'u2', nombre: 'Ana' },
     { id: 'u3', nombre: 'Carlos' },
     { id: 'u4', nombre: 'Maria' },
+    { id: 'u5', nombre: 'Luis' },
+    { id: 'u6', nombre: 'Sofia' },
   ]);
 
   // Estado: Carreras
@@ -59,7 +61,7 @@ export default function App() {
   };
 
   // --- Filtrado de Usuarios Disponibles ---
-  // Calcula qué usuarios de la lista YA están asignados en alguna carrera
+  // Calcula qué usuarios de la lista YA están asignados en alguna carrera para no mostrarlos
   const usuariosDisponibles = useMemo(() => {
     // 1. Obtener todos los nombres actualmente ocupando un asiento
     const nombresOcupados = new Set();
@@ -72,9 +74,6 @@ export default function App() {
     });
 
     // 2. Filtrar la lista base para excluir los ocupados
-    // Nota: Si estamos editando un usuario (targetSlot.passengerId existe), 
-    // permitimos que su propio nombre aparezca o simplemente mostramos los libres.
-    // Para simplificar "cuál he puesto y cuál no", mostramos solo los que NO están en ninguna parte.
     return listaUsuarios.filter(u => !nombresOcupados.has(u.nombre.toLowerCase()));
   }, [carreras, listaUsuarios]);
 
@@ -111,11 +110,13 @@ export default function App() {
       };
 
       if (targetSlot.passengerId) {
+         // Edición: Actualizar existente
          return {
            ...carrera,
            pasajeros: carrera.pasajeros.map(p => p && p.id === targetSlot.passengerId ? newPassenger : p)
          };
       } else {
+         // Nuevo: Insertar en el hueco
          const cleanPasajeros = carrera.pasajeros.filter(p => p !== null);
          if (cleanPasajeros.length < 4) {
             cleanPasajeros.push(newPassenger);
@@ -140,22 +141,22 @@ export default function App() {
       
       {/* Cabecera / Banner */}
       <div className="w-full bg-gray-800 shadow-lg z-20 border-b border-gray-700 relative">
-         <div className="w-full bg-white/5">
+         <div className="w-full bg-white/5 flex justify-center py-2">
            <img 
               src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgfAvcFq0KreDS0koLhz9u1orNgnUyAwthncp-S8xiUD2joDJS_NF38K38cKWjbi5egUDRUlAUajI3TNcCehS23Lb2J5dW_AHzPYnJWiwmJWGuQHYHs15rs7nJYyanA569XHoYkH-9N8MACujUfGi4wbSZHIINm_iKaxgJ6dzgm3d0CUy84v40vEfimLJU/w519-h358/ChatGPT%20Image%2014%20jun%202025,%2004_32_54%20p.m..png"
               alt="Logo"
-              className="w-full h-auto max-h-[30vh] object-contain mx-auto"
+              className="w-auto h-auto max-h-[25vh] object-contain"
             />
          </div>
          
          {/* Barra de título y botón de Gestión */}
          <div className="py-2 px-4 bg-indigo-900/80 backdrop-blur-sm border-t border-indigo-800 flex justify-between items-center">
-            <span className="text-blue-100 font-bold uppercase tracking-widest text-xs">
+            <span className="text-blue-100 font-bold uppercase tracking-widest text-[10px] sm:text-xs">
               Control de Salidas
             </span>
             <button 
               onClick={() => setUserManagementModalOpen(true)}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-full transition-colors font-medium shadow-sm"
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full transition-colors font-medium shadow-sm"
             >
               <Users size={14} />
               Gestionar Lista
@@ -167,7 +168,7 @@ export default function App() {
       <main className="flex-1 w-full p-1 overflow-hidden flex flex-col">
         <div className="w-full bg-gray-800 border border-gray-700 shadow-2xl rounded-lg overflow-hidden flex flex-col h-full">
           
-          {/* Encabezados */}
+          {/* Encabezados de Columna (Carreras) */}
           <div className="grid grid-cols-5 bg-gray-900 border-b border-gray-700 divide-x divide-gray-700">
             {carreras.map(carrera => (
               <div key={carrera.id} className="py-2 px-0.5 text-center overflow-hidden">
@@ -224,7 +225,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* MODAL 1: Asignar Asiento (Selección Rápida) */}
+      {/* MODAL 1: Asignar Asiento (Selección Rápida y Manual) */}
       {assignmentModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -246,7 +247,7 @@ export default function App() {
                 />
               </div>
 
-              {/* Lista Rápida */}
+              {/* Lista Rápida (Filtrada) */}
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase block mb-2 flex items-center gap-2">
                   <Search size={12} /> Disponibles ({usuariosDisponibles.length})
@@ -267,7 +268,7 @@ export default function App() {
                   ))}
                   {usuariosDisponibles.length === 0 && (
                     <span className="text-gray-500 text-xs italic w-full text-center py-2">
-                      {listaUsuarios.length === 0 ? "Lista vacía. Gestionar arriba." : "Todos los usuarios están asignados."}
+                      {listaUsuarios.length === 0 ? "Lista vacía. Gestionar arriba." : "Todos asignados."}
                     </span>
                   )}
                 </div>
@@ -308,7 +309,7 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL 2: Gestión de Lista de Usuarios */}
+      {/* MODAL 2: Gestión de Lista de Usuarios (Agregar/Eliminar) */}
       {userManagementModalOpen && (
         <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4">
           <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
