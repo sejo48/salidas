@@ -1,367 +1,395 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  User, 
-  Trash2, 
-  X, 
-  Check,
-  Users,
-  Plus,
-  Search
-} from 'lucide-react';
-
-// --- Configuración de Colores de Asiento ---
-const SEAT_COLORS = [
-  { id: 'azul', label: 'Azul', bg: 'bg-blue-600', border: 'border-blue-400', text: 'text-white' },
-  { id: 'rojo', label: 'Rojo', bg: 'bg-red-600', border: 'border-red-400', text: 'text-white' },
-  { id: 'amarillo', label: 'Amarillo', bg: 'bg-yellow-400', border: 'border-yellow-200', text: 'text-black' },
-  { id: 'verde', label: 'Verde', bg: 'bg-emerald-600', border: 'border-emerald-400', text: 'text-white' },
-];
-
-export default function App() {
-  // Estado: Lista General de Usuarios (Base de Datos)
-  const [listaUsuarios, setListaUsuarios] = useState([
-    { id: 'u1', nombre: 'Jorge' },
-    { id: 'u2', nombre: 'Ana' },
-    { id: 'u3', nombre: 'Carlos' },
-    { id: 'u4', nombre: 'Maria' },
-    { id: 'u5', nombre: 'Luis' },
-    { id: 'u6', nombre: 'Sofia' },
-  ]);
-
-  // Estado: Carreras
-  const [carreras, setCarreras] = useState([
-    { id: 1, nombre: 'Carrera 1', pasajeros: [] },
-    { id: 2, nombre: 'Carrera 2', pasajeros: [] },
-    { id: 3, nombre: 'Carrera 3', pasajeros: [] },
-    { id: 4, nombre: 'Carrera 4', pasajeros: [] },
-    { id: 5, nombre: 'Carrera 5', pasajeros: [] },
-  ]);
-
-  // Modales
-  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
-  const [userManagementModalOpen, setUserManagementModalOpen] = useState(false);
-  
-  // Estados temporales
-  const [targetSlot, setTargetSlot] = useState({ carreraId: null, passengerId: null, index: null });
-  const [formData, setFormData] = useState({ nombre: '', colorId: 'azul' });
-  const [newUserParams, setNewUserParams] = useState(''); // Para agregar nuevo usuario a la lista
-
-  // --- Lógica de Gestión de Usuarios (Lista General) ---
-  const handleAddUserToList = () => {
-    if (!newUserParams.trim()) return;
-    const exists = listaUsuarios.some(u => u.nombre.toLowerCase() === newUserParams.trim().toLowerCase());
-    if (!exists) {
-      setListaUsuarios([...listaUsuarios, { id: Date.now().toString(), nombre: newUserParams.trim() }]);
-      setNewUserParams('');
-    }
-  };
-
-  const handleDeleteUserFromList = (id) => {
-    setListaUsuarios(listaUsuarios.filter(u => u.id !== id));
-  };
-
-  // --- Filtrado de Usuarios Disponibles ---
-  // Calcula qué usuarios de la lista YA están asignados en alguna carrera para no mostrarlos
-  const usuariosDisponibles = useMemo(() => {
-    // 1. Obtener todos los nombres actualmente ocupando un asiento
-    const nombresOcupados = new Set();
-    carreras.forEach(carrera => {
-      carrera.pasajeros.forEach(pasajero => {
-        if (pasajero && pasajero.nombre) {
-          nombresOcupados.add(pasajero.nombre.toLowerCase());
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinador de Transportes</title>
+    <!-- Tailwind CSS (Estilos) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Ajustes para scrollbar en modo oscuro */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .modal { transition: opacity 0.2s ease-in-out; }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+        .visible-modal { opacity: 1; pointer-events: auto; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { gray: { 900: '#111827', 800: '#1f2937', 700: '#374151' } } } }
         }
-      });
-    });
+    </script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans h-screen flex flex-col overflow-hidden">
 
-    // 2. Filtrar la lista base para excluir los ocupados
-    return listaUsuarios.filter(u => !nombresOcupados.has(u.nombre.toLowerCase()));
-  }, [carreras, listaUsuarios]);
-
-
-  // --- Lógica de Asignación de Asientos ---
-  const getSlots = (pasajeros) => {
-    const slots = [...pasajeros];
-    while (slots.length < 4) slots.push(null);
-    return slots.slice(0, 4);
-  };
-
-  const handleSlotClick = (carreraId, pasajero, index) => {
-    setTargetSlot({ carreraId, passengerId: pasajero ? pasajero.id : null, index });
-    setFormData({ 
-      nombre: pasajero ? pasajero.nombre : '', 
-      colorId: pasajero ? pasajero.colorId : 'azul' 
-    });
-    setAssignmentModalOpen(true);
-  };
-
-  const handleSaveAssignment = () => {
-    if (!formData.nombre.trim()) return;
-
-    setCarreras(prev => prev.map(carrera => {
-      if (carrera.id !== targetSlot.carreraId) return carrera;
-
-      const newPasajeros = [...carrera.pasajeros];
-      while (newPasajeros.length <= targetSlot.index) newPasajeros.push(null);
-
-      const newPassenger = {
-        id: targetSlot.passengerId || Date.now(),
-        nombre: formData.nombre,
-        colorId: formData.colorId
-      };
-
-      if (targetSlot.passengerId) {
-         // Edición: Actualizar existente
-         return {
-           ...carrera,
-           pasajeros: carrera.pasajeros.map(p => p && p.id === targetSlot.passengerId ? newPassenger : p)
-         };
-      } else {
-         // Nuevo: Insertar en el hueco
-         const cleanPasajeros = carrera.pasajeros.filter(p => p !== null);
-         if (cleanPasajeros.length < 4) {
-            cleanPasajeros.push(newPassenger);
-         }
-         return { ...carrera, pasajeros: cleanPasajeros };
-      }
-    }));
-    setAssignmentModalOpen(false);
-  };
-
-  const handleDeleteAssignment = () => {
-    if (!targetSlot.passengerId) return; 
-    setCarreras(prev => prev.map(carrera => {
-      if (carrera.id !== targetSlot.carreraId) return carrera;
-      return { ...carrera, pasajeros: carrera.pasajeros.filter(p => p.id !== targetSlot.passengerId) };
-    }));
-    setAssignmentModalOpen(false);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-900 font-sans text-gray-100 flex flex-col">
-      
-      {/* Cabecera / Banner */}
-      <div className="w-full bg-gray-800 shadow-lg z-20 border-b border-gray-700 relative">
-         <div className="w-full bg-white/5 flex justify-center py-2">
-           <img 
-              src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgfAvcFq0KreDS0koLhz9u1orNgnUyAwthncp-S8xiUD2joDJS_NF38K38cKWjbi5egUDRUlAUajI3TNcCehS23Lb2J5dW_AHzPYnJWiwmJWGuQHYHs15rs7nJYyanA569XHoYkH-9N8MACujUfGi4wbSZHIINm_iKaxgJ6dzgm3d0CUy84v40vEfimLJU/w519-h358/ChatGPT%20Image%2014%20jun%202025,%2004_32_54%20p.m..png"
-              alt="Logo"
-              className="w-auto h-auto max-h-[25vh] object-contain"
-            />
-         </div>
-         
-         {/* Barra de título y botón de Gestión */}
-         <div className="py-2 px-4 bg-indigo-900/80 backdrop-blur-sm border-t border-indigo-800 flex justify-between items-center">
-            <span className="text-blue-100 font-bold uppercase tracking-widest text-[10px] sm:text-xs">
-              Control de Salidas
-            </span>
-            <button 
-              onClick={() => setUserManagementModalOpen(true)}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full transition-colors font-medium shadow-sm"
-            >
-              <Users size={14} />
-              Gestionar Lista
+    <!-- CABECERA -->
+    <header class="bg-gray-800 shadow-lg z-20 border-b border-gray-700 shrink-0">
+        <div class="w-full bg-white/5 flex justify-center py-2">
+            <!-- Tu imagen de cabecera -->
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgfAvcFq0KreDS0koLhz9u1orNgnUyAwthncp-S8xiUD2joDJS_NF38K38cKWjbi5egUDRUlAUajI3TNcCehS23Lb2J5dW_AHzPYnJWiwmJWGuQHYHs15rs7nJYyanA569XHoYkH-9N8MACujUfGi4wbSZHIINm_iKaxgJ6dzgm3d0CUy84v40vEfimLJU/w519-h358/ChatGPT%20Image%2014%20jun%202025,%2004_32_54%20p.m..png" 
+                 alt="Logo" class="h-20 sm:h-32 object-contain">
+        </div>
+        <div class="py-2 px-4 bg-indigo-900/80 backdrop-blur-sm border-t border-indigo-800 flex justify-between items-center">
+            <span class="text-blue-100 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Control de Salidas</span>
+            <button onclick="openUserModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full transition-colors font-medium shadow-sm">
+                <i data-lucide="users" class="w-3 h-3"></i> Gestionar Lista
             </button>
-         </div>
-      </div>
-
-      {/* Grid Principal */}
-      <main className="flex-1 w-full p-1 overflow-hidden flex flex-col">
-        <div className="w-full bg-gray-800 border border-gray-700 shadow-2xl rounded-lg overflow-hidden flex flex-col h-full">
-          
-          {/* Encabezados de Columna (Carreras) */}
-          <div className="grid grid-cols-5 bg-gray-900 border-b border-gray-700 divide-x divide-gray-700">
-            {carreras.map(carrera => (
-              <div key={carrera.id} className="py-2 px-0.5 text-center overflow-hidden">
-                <div className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Salida</div>
-                <div className="font-bold text-gray-200 text-[10px] sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-                  {carrera.nombre.replace('Carrera', 'C')}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Cuerpo de la Tabla */}
-          <div className="grid grid-cols-5 divide-x divide-gray-700 bg-gray-800 flex-1 overflow-y-auto">
-            {carreras.map((carrera) => {
-              const slots = getSlots(carrera.pasajeros);
-              return (
-                <div key={carrera.id} className="divide-y divide-gray-700">
-                  {slots.map((pasajero, index) => {
-                    const colorData = pasajero ? SEAT_COLORS.find(c => c.id === pasajero.colorId) : null;
-                    return (
-                      <div 
-                        key={index} 
-                        onClick={() => handleSlotClick(carrera.id, pasajero, index)}
-                        className={`
-                          h-20 sm:h-28 p-0.5 sm:p-1 transition-all cursor-pointer relative group
-                          ${!pasajero ? 'hover:bg-gray-700/50' : ''}
-                        `}
-                      >
-                        {pasajero ? (
-                          <div className={`
-                            w-full h-full rounded border-l-2 sm:border-l-4 shadow-sm flex flex-col items-center justify-center text-center gap-0.5 overflow-hidden
-                            ${colorData?.bg || 'bg-gray-700'} 
-                            ${colorData?.border || 'border-gray-500'}
-                          `}>
-                             <div className="bg-black/20 p-1 rounded-full">
-                                <User className={colorData?.text || "text-white"} size={14} strokeWidth={2.5} />
-                             </div>
-                             <span className={`text-[9px] sm:text-xs font-bold leading-tight line-clamp-2 px-0.5 break-words w-full ${colorData?.text || "text-white"}`}>
-                               {pasajero.nombre}
-                             </span>
-                          </div>
-                        ) : (
-                          <div className="w-full h-full border border-dashed border-gray-600 rounded flex flex-col items-center justify-center text-gray-600 hover:text-gray-400 hover:border-gray-500 transition-colors">
-                            <span className="text-lg font-light">+</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
         </div>
-      </main>
+    </header>
 
-      {/* MODAL 1: Asignar Asiento (Selección Rápida y Manual) */}
-      {assignmentModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="bg-gray-900/50 px-4 py-3 border-b border-gray-700 flex justify-between items-center shrink-0">
-              <h3 className="font-bold text-gray-100">Asignar Asiento</h3>
-              <button onClick={() => setAssignmentModalOpen(false)} className="p-1 hover:bg-gray-700 rounded-full text-gray-400"><X size={20} /></button>
+    <!-- GRID PRINCIPAL -->
+    <main class="flex-1 w-full p-1 overflow-hidden flex flex-col">
+        <div class="w-full bg-gray-800 border border-gray-700 shadow-2xl rounded-lg overflow-hidden flex flex-col h-full">
+            <!-- Encabezados -->
+            <div id="headers-container" class="grid grid-cols-5 bg-gray-900 border-b border-gray-700 divide-x divide-gray-700 shrink-0">
+                <!-- Se llena con JS -->
             </div>
-            
-            <div className="p-4 space-y-4 overflow-y-auto">
-              {/* Input Manual */}
-              <div>
-                <label className="text-xs font-bold text-gray-400 uppercase block mb-1.5">Nombre (Manual)</label>
-                <input 
-                  type="text" 
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                  className="w-full bg-gray-900 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Escribir nombre..."
-                />
-              </div>
-
-              {/* Lista Rápida (Filtrada) */}
-              <div>
-                <label className="text-xs font-bold text-gray-400 uppercase block mb-2 flex items-center gap-2">
-                  <Search size={12} /> Disponibles ({usuariosDisponibles.length})
-                </label>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 bg-gray-900/30 rounded-lg min-h-[3rem]">
-                  {usuariosDisponibles.map(u => (
-                    <button
-                      key={u.id}
-                      onClick={() => setFormData({ ...formData, nombre: u.nombre })}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                        formData.nombre === u.nombre 
-                        ? 'bg-blue-600 border-blue-400 text-white' 
-                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-                      }`}
-                    >
-                      {u.nombre}
-                    </button>
-                  ))}
-                  {usuariosDisponibles.length === 0 && (
-                    <span className="text-gray-500 text-xs italic w-full text-center py-2">
-                      {listaUsuarios.length === 0 ? "Lista vacía. Gestionar arriba." : "Todos asignados."}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Colores */}
-              <div>
-                <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Color</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {SEAT_COLORS.map(color => (
-                    <button
-                      key={color.id}
-                      onClick={() => setFormData({...formData, colorId: color.id})}
-                      className={`
-                        h-10 rounded border-2 flex items-center justify-center transition-all
-                        ${color.bg} ${color.border}
-                        ${formData.colorId === color.id ? 'ring-2 ring-white scale-110 z-10' : 'opacity-60'}
-                      `}
-                    >
-                      {formData.colorId === color.id && <Check size={16} className={color.id === 'amarillo' ? 'text-black' : 'text-white'} />}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <!-- Cuerpo Tabla -->
+            <div id="grid-container" class="grid grid-cols-5 divide-x divide-gray-700 bg-gray-800 flex-1 overflow-y-auto">
+                <!-- Se llena con JS -->
             </div>
+        </div>
+    </main>
 
-            <div className="p-4 bg-gray-900/50 border-t border-gray-700 flex gap-3 shrink-0">
-              {targetSlot.passengerId && (
-                <button onClick={handleDeleteAssignment} className="p-3 text-red-400 hover:bg-red-900/20 rounded border border-red-900/30">
-                  <Trash2 size={20} />
+    <!-- MODAL ASIGNAR ASIENTO -->
+    <div id="modal-assignment" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal hidden-modal">
+        <div class="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <div class="bg-gray-900/50 px-4 py-3 border-b border-gray-700 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-gray-100">Asignar Asiento</h3>
+                <button onclick="closeModal('modal-assignment')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <!-- Input Manual -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1.5">Nombre (Manual)</label>
+                    <input type="text" id="input-name" class="w-full bg-gray-900 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Escribir nombre...">
+                </div>
+                <!-- Lista Rápida -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-2 flex items-center gap-2">
+                        <i data-lucide="search" class="w-3 h-3"></i> Disponibles
+                    </label>
+                    <div id="quick-list" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 bg-gray-900/30 rounded-lg min-h-[3rem]">
+                        <!-- Se llena con JS -->
+                    </div>
+                </div>
+                <!-- Colores -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Color</label>
+                    <div class="grid grid-cols-4 gap-2" id="color-picker">
+                        <!-- Botones de color -->
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-900/50 border-t border-gray-700 flex gap-3 shrink-0">
+                <button id="btn-delete-assignment" onclick="deleteAssignment()" class="hidden p-3 text-red-400 hover:bg-red-900/20 rounded border border-red-900/30">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
-              )}
-              <button onClick={handleSaveAssignment} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-500">
-                {targetSlot.passengerId ? 'Actualizar' : 'Asignar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: Gestión de Lista de Usuarios (Agregar/Eliminar) */}
-      {userManagementModalOpen && (
-        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="bg-indigo-900/40 px-4 py-4 border-b border-indigo-500/30 flex justify-between items-center">
-              <h3 className="font-bold text-white flex items-center gap-2"><Users size={18}/> Lista de Usuarios</h3>
-              <button onClick={() => setUserManagementModalOpen(false)} className="text-gray-400 hover:text-white"><X size={24} /></button>
-            </div>
-
-            <div className="p-4 bg-gray-800/50 border-b border-gray-700">
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newUserParams}
-                  onChange={(e) => setNewUserParams(e.target.value)}
-                  className="flex-1 bg-gray-900 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none"
-                  placeholder="Nuevo usuario..."
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddUserToList()}
-                />
-                <button 
-                  onClick={handleAddUserToList}
-                  className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-500"
-                >
-                  <Plus size={20} />
+                <button onclick="saveAssignment()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-500">
+                    Confirmar
                 </button>
-              </div>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {listaUsuarios.length === 0 ? (
-                <p className="text-center text-gray-500 text-sm py-4">No hay usuarios guardados.</p>
-              ) : (
-                listaUsuarios.map(u => (
-                  <div key={u.id} className="flex justify-between items-center bg-gray-700/40 p-3 rounded-lg border border-gray-700/50 group">
-                    <span className="text-gray-200 font-medium">{u.nombre}</span>
-                    <button 
-                      onClick={() => handleDeleteUserFromList(u.id)}
-                      className="text-gray-500 hover:text-red-400 p-1"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            <div className="p-3 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800">
-              {listaUsuarios.length} usuarios registrados
-            </div>
-          </div>
         </div>
-      )}
-
     </div>
-  );
-}
+
+    <!-- MODAL GESTIÓN USUARIOS -->
+    <div id="modal-users" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 modal hidden-modal">
+        <div class="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-sm flex flex-col max-h-[85vh]">
+            <div class="bg-indigo-900/40 px-4 py-4 border-b border-indigo-500/30 flex justify-between items-center">
+                <h3 class="font-bold text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Lista de Usuarios</h3>
+                <button onclick="closeModal('modal-users')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-4 bg-gray-800/50 border-b border-gray-700">
+                <div class="flex gap-2">
+                    <input type="text" id="input-new-user" class="flex-1 bg-gray-900 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none" placeholder="Nuevo usuario...">
+                    <button onclick="addUserToList()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-500">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="users-list-container" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <!-- Se llena con JS -->
+            </div>
+            <div id="users-count" class="p-3 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800">
+                0 usuarios registrados
+            </div>
+        </div>
+    </div>
+
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        // DATOS INICIALES
+        let listaUsuarios = [
+            { id: 'u1', nombre: 'Jorge' }, { id: 'u2', nombre: 'Ana' },
+            { id: 'u3', nombre: 'Carlos' }, { id: 'u4', nombre: 'Maria' },
+            { id: 'u5', nombre: 'Luis' }, { id: 'u6', nombre: 'Sofia' }
+        ];
+
+        let carreras = [
+            { id: 1, nombre: 'Carrera 1', pasajeros: [] },
+            { id: 2, nombre: 'Carrera 2', pasajeros: [] },
+            { id: 3, nombre: 'Carrera 3', pasajeros: [] },
+            { id: 4, nombre: 'Carrera 4', pasajeros: [] },
+            { id: 5, nombre: 'Carrera 5', pasajeros: [] }
+        ];
+
+        const SEAT_COLORS = [
+            { id: 'azul', label: 'Azul', bg: 'bg-blue-600', border: 'border-blue-400', text: 'text-white' },
+            { id: 'rojo', label: 'Rojo', bg: 'bg-red-600', border: 'border-red-400', text: 'text-white' },
+            { id: 'amarillo', label: 'Amarillo', bg: 'bg-yellow-400', border: 'border-yellow-200', text: 'text-black' },
+            { id: 'verde', label: 'Verde', bg: 'bg-emerald-600', border: 'border-emerald-400', text: 'text-white' }
+        ];
+
+        // Estado temporal para edición
+        let tempState = { carreraId: null, passengerId: null, index: null, selectedColor: 'azul' };
+
+        // --- FUNCIONES DE RENDERIZADO ---
+
+        function init() {
+            renderGrid();
+            renderUserList();
+            lucide.createIcons();
+        }
+
+        function renderGrid() {
+            const headerContainer = document.getElementById('headers-container');
+            const gridContainer = document.getElementById('grid-container');
+            
+            headerContainer.innerHTML = '';
+            gridContainer.innerHTML = '';
+
+            // 1. Renderizar Headers
+            carreras.forEach(c => {
+                headerContainer.innerHTML += `
+                    <div class="py-2 px-0.5 text-center overflow-hidden">
+                        <div class="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Salida</div>
+                        <div class="font-bold text-gray-200 text-[10px] sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                            ${c.nombre.replace('Carrera', 'C')}
+                        </div>
+                    </div>`;
+            });
+
+            // 2. Renderizar Columnas de Pasajeros
+            carreras.forEach(c => {
+                let columnHtml = `<div class="divide-y divide-gray-700">`;
+                
+                // Asegurar 4 slots siempre
+                const slots = [...c.pasajeros];
+                while(slots.length < 4) slots.push(null);
+                const finalSlots = slots.slice(0, 4);
+
+                finalSlots.forEach((p, idx) => {
+                    if (p) {
+                        // Slot Ocupado
+                        const color = SEAT_COLORS.find(col => col.id === p.colorId) || SEAT_COLORS[0];
+                        columnHtml += `
+                            <div onclick="openAssignmentModal(${c.id}, '${p.id}', ${idx}, '${p.nombre}', '${p.colorId}')" 
+                                 class="h-20 sm:h-28 p-0.5 sm:p-1 transition-all cursor-pointer relative group">
+                                <div class="w-full h-full rounded border-l-2 sm:border-l-4 shadow-sm flex flex-col items-center justify-center text-center gap-0.5 overflow-hidden ${color.bg} ${color.border}">
+                                    <div class="bg-black/20 p-1 rounded-full">
+                                        <i data-lucide="user" class="w-3 h-3 ${color.text}"></i>
+                                    </div>
+                                    <span class="text-[9px] sm:text-xs font-bold leading-tight line-clamp-2 px-0.5 break-words w-full ${color.text}">${p.nombre}</span>
+                                </div>
+                            </div>`;
+                    } else {
+                        // Slot Vacío
+                        columnHtml += `
+                            <div onclick="openAssignmentModal(${c.id}, null, ${idx})" 
+                                 class="h-20 sm:h-28 p-0.5 sm:p-1 transition-all cursor-pointer relative group hover:bg-gray-700/50">
+                                <div class="w-full h-full border border-dashed border-gray-600 rounded flex flex-col items-center justify-center text-gray-600 hover:text-gray-400 hover:border-gray-500 transition-colors">
+                                    <span class="text-lg font-light">+</span>
+                                </div>
+                            </div>`;
+                    }
+                });
+                columnHtml += `</div>`;
+                gridContainer.innerHTML += columnHtml;
+            });
+            lucide.createIcons();
+        }
+
+        // --- GESTIÓN DE MODALES ---
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden-modal');
+            el.classList.add('visible-modal');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('visible-modal');
+            el.classList.add('hidden-modal');
+        }
+
+        // --- LÓGICA DE ASIGNACIÓN ---
+
+        function openAssignmentModal(cId, pId, idx, pName = '', pColor = 'azul') {
+            tempState = { carreraId: cId, passengerId: pId, index: idx, selectedColor: pColor };
+            
+            document.getElementById('input-name').value = pName;
+            
+            // Botón eliminar solo si hay pasajero
+            const btnDelete = document.getElementById('btn-delete-assignment');
+            if (pId) btnDelete.classList.remove('hidden');
+            else btnDelete.classList.add('hidden');
+
+            renderColorPicker();
+            renderQuickList();
+            openModal('modal-assignment');
+        }
+
+        function renderColorPicker() {
+            const container = document.getElementById('color-picker');
+            container.innerHTML = '';
+            SEAT_COLORS.forEach(c => {
+                const isSelected = tempState.selectedColor === c.id;
+                const borderStyle = isSelected ? 'ring-2 ring-white scale-110 z-10' : 'opacity-60';
+                const checkIcon = isSelected ? `<i data-lucide="check" class="w-4 h-4 ${c.id === 'amarillo' ? 'text-black' : 'text-white'}"></i>` : '';
+                
+                container.innerHTML += `
+                    <button onclick="selectColor('${c.id}')" 
+                            class="h-10 rounded border-2 flex items-center justify-center transition-all ${c.bg} ${c.border} ${borderStyle}">
+                        ${checkIcon}
+                    </button>`;
+            });
+            lucide.createIcons();
+        }
+
+        function selectColor(id) {
+            tempState.selectedColor = id;
+            renderColorPicker();
+        }
+
+        function renderQuickList() {
+            const container = document.getElementById('quick-list');
+            container.innerHTML = '';
+            
+            // Filtrar usuarios ya asignados
+            const ocupados = new Set();
+            carreras.forEach(c => c.pasajeros.forEach(p => {
+                if(p && p.nombre) ocupados.add(p.nombre.toLowerCase());
+            }));
+
+            // Excluir si ya está ocupado (a menos que sea el mismo que edito)
+            const currentName = document.getElementById('input-name').value.toLowerCase();
+            const disponibles = listaUsuarios.filter(u => !ocupados.has(u.nombre.toLowerCase()) || u.nombre.toLowerCase() === currentName);
+
+            if(disponibles.length === 0) {
+                container.innerHTML = `<span class="text-gray-500 text-xs italic w-full text-center py-2">Todos asignados.</span>`;
+                return;
+            }
+
+            disponibles.forEach(u => {
+                const isSelected = document.getElementById('input-name').value === u.nombre;
+                const style = isSelected ? 'bg-blue-600 border-blue-400 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600';
+                container.innerHTML += `
+                    <button onclick="selectQuickUser('${u.nombre}')" class="text-xs px-3 py-1.5 rounded-full border transition-all ${style}">
+                        ${u.nombre}
+                    </button>`;
+            });
+        }
+
+        function selectQuickUser(name) {
+            document.getElementById('input-name').value = name;
+            renderQuickList();
+        }
+
+        function saveAssignment() {
+            const name = document.getElementById('input-name').value.trim();
+            if (!name) return;
+
+            const carrera = carreras.find(c => c.id === tempState.carreraId);
+            
+            // Rellenar nulls si hace falta
+            while(carrera.pasajeros.length <= tempState.index) {
+                carrera.pasajeros.push(null);
+            }
+
+            const newPassenger = {
+                id: tempState.passengerId || Date.now().toString(),
+                nombre: name,
+                colorId: tempState.selectedColor
+            };
+
+            // Guardar
+            if (tempState.passengerId) {
+                // Editar
+                carrera.pasajeros = carrera.pasajeros.map(p => (p && p.id === tempState.passengerId) ? newPassenger : p);
+            } else {
+                // Nuevo
+                // Limpiar nulls y agregar
+                const clean = carrera.pasajeros.filter(p => p !== null);
+                if (clean.length < 4) clean.push(newPassenger);
+                carrera.pasajeros = clean;
+            }
+
+            renderGrid();
+            closeModal('modal-assignment');
+        }
+
+        function deleteAssignment() {
+            if (!tempState.passengerId) return;
+            const carrera = carreras.find(c => c.id === tempState.carreraId);
+            carrera.pasajeros = carrera.pasajeros.filter(p => p.id !== tempState.passengerId);
+            renderGrid();
+            closeModal('modal-assignment');
+        }
+
+        // --- GESTIÓN DE USUARIOS ---
+
+        function openUserModal() {
+            renderUserList();
+            openModal('modal-users');
+        }
+
+        function renderUserList() {
+            const container = document.getElementById('users-list-container');
+            const countEl = document.getElementById('users-count');
+            container.innerHTML = '';
+            
+            if (listaUsuarios.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">No hay usuarios.</p>`;
+            } else {
+                listaUsuarios.forEach(u => {
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center bg-gray-700/40 p-3 rounded-lg border border-gray-700/50 group">
+                            <span class="text-gray-200 font-medium">${u.nombre}</span>
+                            <button onclick="deleteUser('${u.id}')" class="text-gray-500 hover:text-red-400 p-1">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>`;
+                });
+            }
+            countEl.innerText = `${listaUsuarios.length} usuarios registrados`;
+            lucide.createIcons();
+        }
+
+        function addUserToList() {
+            const input = document.getElementById('input-new-user');
+            const name = input.value.trim();
+            if (!name) return;
+            
+            const exists = listaUsuarios.some(u => u.nombre.toLowerCase() === name.toLowerCase());
+            if (!exists) {
+                listaUsuarios.push({ id: Date.now().toString(), nombre: name });
+                input.value = '';
+                renderUserList();
+            }
+        }
+
+        function deleteUser(id) {
+            listaUsuarios = listaUsuarios.filter(u => u.id !== id);
+            renderUserList();
+        }
+
+        // Inicializar
+        init();
+    </script>
+</body>
+</html>
