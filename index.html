@@ -1,0 +1,366 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  User, 
+  Trash2, 
+  X, 
+  Check,
+  Users,
+  Plus,
+  Search
+} from 'lucide-react';
+
+// --- Configuración de Colores de Asiento ---
+const SEAT_COLORS = [
+  { id: 'azul', label: 'Azul', bg: 'bg-blue-600', border: 'border-blue-400', text: 'text-white' },
+  { id: 'rojo', label: 'Rojo', bg: 'bg-red-600', border: 'border-red-400', text: 'text-white' },
+  { id: 'amarillo', label: 'Amarillo', bg: 'bg-yellow-400', border: 'border-yellow-200', text: 'text-black' },
+  { id: 'verde', label: 'Verde', bg: 'bg-emerald-600', border: 'border-emerald-400', text: 'text-white' },
+];
+
+export default function App() {
+  // Estado: Lista General de Usuarios (Base de Datos)
+  const [listaUsuarios, setListaUsuarios] = useState([
+    { id: 'u1', nombre: 'Jorge' },
+    { id: 'u2', nombre: 'Ana' },
+    { id: 'u3', nombre: 'Carlos' },
+    { id: 'u4', nombre: 'Maria' },
+  ]);
+
+  // Estado: Carreras
+  const [carreras, setCarreras] = useState([
+    { id: 1, nombre: 'Carrera 1', pasajeros: [] },
+    { id: 2, nombre: 'Carrera 2', pasajeros: [] },
+    { id: 3, nombre: 'Carrera 3', pasajeros: [] },
+    { id: 4, nombre: 'Carrera 4', pasajeros: [] },
+    { id: 5, nombre: 'Carrera 5', pasajeros: [] },
+  ]);
+
+  // Modales
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+  const [userManagementModalOpen, setUserManagementModalOpen] = useState(false);
+  
+  // Estados temporales
+  const [targetSlot, setTargetSlot] = useState({ carreraId: null, passengerId: null, index: null });
+  const [formData, setFormData] = useState({ nombre: '', colorId: 'azul' });
+  const [newUserParams, setNewUserParams] = useState(''); // Para agregar nuevo usuario a la lista
+
+  // --- Lógica de Gestión de Usuarios (Lista General) ---
+  const handleAddUserToList = () => {
+    if (!newUserParams.trim()) return;
+    const exists = listaUsuarios.some(u => u.nombre.toLowerCase() === newUserParams.trim().toLowerCase());
+    if (!exists) {
+      setListaUsuarios([...listaUsuarios, { id: Date.now().toString(), nombre: newUserParams.trim() }]);
+      setNewUserParams('');
+    }
+  };
+
+  const handleDeleteUserFromList = (id) => {
+    setListaUsuarios(listaUsuarios.filter(u => u.id !== id));
+  };
+
+  // --- Filtrado de Usuarios Disponibles ---
+  // Calcula qué usuarios de la lista YA están asignados en alguna carrera
+  const usuariosDisponibles = useMemo(() => {
+    // 1. Obtener todos los nombres actualmente ocupando un asiento
+    const nombresOcupados = new Set();
+    carreras.forEach(carrera => {
+      carrera.pasajeros.forEach(pasajero => {
+        if (pasajero && pasajero.nombre) {
+          nombresOcupados.add(pasajero.nombre.toLowerCase());
+        }
+      });
+    });
+
+    // 2. Filtrar la lista base para excluir los ocupados
+    // Nota: Si estamos editando un usuario (targetSlot.passengerId existe), 
+    // permitimos que su propio nombre aparezca o simplemente mostramos los libres.
+    // Para simplificar "cuál he puesto y cuál no", mostramos solo los que NO están en ninguna parte.
+    return listaUsuarios.filter(u => !nombresOcupados.has(u.nombre.toLowerCase()));
+  }, [carreras, listaUsuarios]);
+
+
+  // --- Lógica de Asignación de Asientos ---
+  const getSlots = (pasajeros) => {
+    const slots = [...pasajeros];
+    while (slots.length < 4) slots.push(null);
+    return slots.slice(0, 4);
+  };
+
+  const handleSlotClick = (carreraId, pasajero, index) => {
+    setTargetSlot({ carreraId, passengerId: pasajero ? pasajero.id : null, index });
+    setFormData({ 
+      nombre: pasajero ? pasajero.nombre : '', 
+      colorId: pasajero ? pasajero.colorId : 'azul' 
+    });
+    setAssignmentModalOpen(true);
+  };
+
+  const handleSaveAssignment = () => {
+    if (!formData.nombre.trim()) return;
+
+    setCarreras(prev => prev.map(carrera => {
+      if (carrera.id !== targetSlot.carreraId) return carrera;
+
+      const newPasajeros = [...carrera.pasajeros];
+      while (newPasajeros.length <= targetSlot.index) newPasajeros.push(null);
+
+      const newPassenger = {
+        id: targetSlot.passengerId || Date.now(),
+        nombre: formData.nombre,
+        colorId: formData.colorId
+      };
+
+      if (targetSlot.passengerId) {
+         return {
+           ...carrera,
+           pasajeros: carrera.pasajeros.map(p => p && p.id === targetSlot.passengerId ? newPassenger : p)
+         };
+      } else {
+         const cleanPasajeros = carrera.pasajeros.filter(p => p !== null);
+         if (cleanPasajeros.length < 4) {
+            cleanPasajeros.push(newPassenger);
+         }
+         return { ...carrera, pasajeros: cleanPasajeros };
+      }
+    }));
+    setAssignmentModalOpen(false);
+  };
+
+  const handleDeleteAssignment = () => {
+    if (!targetSlot.passengerId) return; 
+    setCarreras(prev => prev.map(carrera => {
+      if (carrera.id !== targetSlot.carreraId) return carrera;
+      return { ...carrera, pasajeros: carrera.pasajeros.filter(p => p.id !== targetSlot.passengerId) };
+    }));
+    setAssignmentModalOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 font-sans text-gray-100 flex flex-col">
+      
+      {/* Cabecera / Banner */}
+      <div className="w-full bg-gray-800 shadow-lg z-20 border-b border-gray-700 relative">
+         <div className="w-full bg-white/5">
+           <img 
+              src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgfAvcFq0KreDS0koLhz9u1orNgnUyAwthncp-S8xiUD2joDJS_NF38K38cKWjbi5egUDRUlAUajI3TNcCehS23Lb2J5dW_AHzPYnJWiwmJWGuQHYHs15rs7nJYyanA569XHoYkH-9N8MACujUfGi4wbSZHIINm_iKaxgJ6dzgm3d0CUy84v40vEfimLJU/w519-h358/ChatGPT%20Image%2014%20jun%202025,%2004_32_54%20p.m..png"
+              alt="Logo"
+              className="w-full h-auto max-h-[30vh] object-contain mx-auto"
+            />
+         </div>
+         
+         {/* Barra de título y botón de Gestión */}
+         <div className="py-2 px-4 bg-indigo-900/80 backdrop-blur-sm border-t border-indigo-800 flex justify-between items-center">
+            <span className="text-blue-100 font-bold uppercase tracking-widest text-xs">
+              Control de Salidas
+            </span>
+            <button 
+              onClick={() => setUserManagementModalOpen(true)}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-full transition-colors font-medium shadow-sm"
+            >
+              <Users size={14} />
+              Gestionar Lista
+            </button>
+         </div>
+      </div>
+
+      {/* Grid Principal */}
+      <main className="flex-1 w-full p-1 overflow-hidden flex flex-col">
+        <div className="w-full bg-gray-800 border border-gray-700 shadow-2xl rounded-lg overflow-hidden flex flex-col h-full">
+          
+          {/* Encabezados */}
+          <div className="grid grid-cols-5 bg-gray-900 border-b border-gray-700 divide-x divide-gray-700">
+            {carreras.map(carrera => (
+              <div key={carrera.id} className="py-2 px-0.5 text-center overflow-hidden">
+                <div className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Salida</div>
+                <div className="font-bold text-gray-200 text-[10px] sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                  {carrera.nombre.replace('Carrera', 'C')}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cuerpo de la Tabla */}
+          <div className="grid grid-cols-5 divide-x divide-gray-700 bg-gray-800 flex-1 overflow-y-auto">
+            {carreras.map((carrera) => {
+              const slots = getSlots(carrera.pasajeros);
+              return (
+                <div key={carrera.id} className="divide-y divide-gray-700">
+                  {slots.map((pasajero, index) => {
+                    const colorData = pasajero ? SEAT_COLORS.find(c => c.id === pasajero.colorId) : null;
+                    return (
+                      <div 
+                        key={index} 
+                        onClick={() => handleSlotClick(carrera.id, pasajero, index)}
+                        className={`
+                          h-20 sm:h-28 p-0.5 sm:p-1 transition-all cursor-pointer relative group
+                          ${!pasajero ? 'hover:bg-gray-700/50' : ''}
+                        `}
+                      >
+                        {pasajero ? (
+                          <div className={`
+                            w-full h-full rounded border-l-2 sm:border-l-4 shadow-sm flex flex-col items-center justify-center text-center gap-0.5 overflow-hidden
+                            ${colorData?.bg || 'bg-gray-700'} 
+                            ${colorData?.border || 'border-gray-500'}
+                          `}>
+                             <div className="bg-black/20 p-1 rounded-full">
+                                <User className={colorData?.text || "text-white"} size={14} strokeWidth={2.5} />
+                             </div>
+                             <span className={`text-[9px] sm:text-xs font-bold leading-tight line-clamp-2 px-0.5 break-words w-full ${colorData?.text || "text-white"}`}>
+                               {pasajero.nombre}
+                             </span>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full border border-dashed border-gray-600 rounded flex flex-col items-center justify-center text-gray-600 hover:text-gray-400 hover:border-gray-500 transition-colors">
+                            <span className="text-lg font-light">+</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </main>
+
+      {/* MODAL 1: Asignar Asiento (Selección Rápida) */}
+      {assignmentModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="bg-gray-900/50 px-4 py-3 border-b border-gray-700 flex justify-between items-center shrink-0">
+              <h3 className="font-bold text-gray-100">Asignar Asiento</h3>
+              <button onClick={() => setAssignmentModalOpen(false)} className="p-1 hover:bg-gray-700 rounded-full text-gray-400"><X size={20} /></button>
+            </div>
+            
+            <div className="p-4 space-y-4 overflow-y-auto">
+              {/* Input Manual */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase block mb-1.5">Nombre (Manual)</label>
+                <input 
+                  type="text" 
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                  className="w-full bg-gray-900 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="Escribir nombre..."
+                />
+              </div>
+
+              {/* Lista Rápida */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase block mb-2 flex items-center gap-2">
+                  <Search size={12} /> Disponibles ({usuariosDisponibles.length})
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 bg-gray-900/30 rounded-lg min-h-[3rem]">
+                  {usuariosDisponibles.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => setFormData({ ...formData, nombre: u.nombre })}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                        formData.nombre === u.nombre 
+                        ? 'bg-blue-600 border-blue-400 text-white' 
+                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {u.nombre}
+                    </button>
+                  ))}
+                  {usuariosDisponibles.length === 0 && (
+                    <span className="text-gray-500 text-xs italic w-full text-center py-2">
+                      {listaUsuarios.length === 0 ? "Lista vacía. Gestionar arriba." : "Todos los usuarios están asignados."}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Colores */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Color</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {SEAT_COLORS.map(color => (
+                    <button
+                      key={color.id}
+                      onClick={() => setFormData({...formData, colorId: color.id})}
+                      className={`
+                        h-10 rounded border-2 flex items-center justify-center transition-all
+                        ${color.bg} ${color.border}
+                        ${formData.colorId === color.id ? 'ring-2 ring-white scale-110 z-10' : 'opacity-60'}
+                      `}
+                    >
+                      {formData.colorId === color.id && <Check size={16} className={color.id === 'amarillo' ? 'text-black' : 'text-white'} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-900/50 border-t border-gray-700 flex gap-3 shrink-0">
+              {targetSlot.passengerId && (
+                <button onClick={handleDeleteAssignment} className="p-3 text-red-400 hover:bg-red-900/20 rounded border border-red-900/30">
+                  <Trash2 size={20} />
+                </button>
+              )}
+              <button onClick={handleSaveAssignment} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-500">
+                {targetSlot.passengerId ? 'Actualizar' : 'Asignar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Gestión de Lista de Usuarios */}
+      {userManagementModalOpen && (
+        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="bg-indigo-900/40 px-4 py-4 border-b border-indigo-500/30 flex justify-between items-center">
+              <h3 className="font-bold text-white flex items-center gap-2"><Users size={18}/> Lista de Usuarios</h3>
+              <button onClick={() => setUserManagementModalOpen(false)} className="text-gray-400 hover:text-white"><X size={24} /></button>
+            </div>
+
+            <div className="p-4 bg-gray-800/50 border-b border-gray-700">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newUserParams}
+                  onChange={(e) => setNewUserParams(e.target.value)}
+                  className="flex-1 bg-gray-900 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none"
+                  placeholder="Nuevo usuario..."
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddUserToList()}
+                />
+                <button 
+                  onClick={handleAddUserToList}
+                  className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-500"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {listaUsuarios.length === 0 ? (
+                <p className="text-center text-gray-500 text-sm py-4">No hay usuarios guardados.</p>
+              ) : (
+                listaUsuarios.map(u => (
+                  <div key={u.id} className="flex justify-between items-center bg-gray-700/40 p-3 rounded-lg border border-gray-700/50 group">
+                    <span className="text-gray-200 font-medium">{u.nombre}</span>
+                    <button 
+                      onClick={() => handleDeleteUserFromList(u.id)}
+                      className="text-gray-500 hover:text-red-400 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="p-3 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800">
+              {listaUsuarios.length} usuarios registrados
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
