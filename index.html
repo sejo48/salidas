@@ -5,25 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coordinador de Transportes</title>
     
-    <!-- CONFIGURACIÓN DE ICONO PARA MÓVILES (iOS y Android) -->
-    <!-- Usamos la misma imagen del bus para el icono -->
+    <!-- Icono y Tema Móvil -->
     <link rel="icon" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgize0RtDFstsOqmadIDBs-S5ahWncPKEEQcA_D2NA4ER5XHJ49wP0UmBQIw-ggOr0PWcrvNB1ocGIlMHV1DbpR1JYvYUK4qYijToiiJJcgIDl-V_e_XyNiTWSNPu7anJWgIhLxFutIRfMOPLdmCoWyQFf7Rsykkig97NR2ByifjVsUIMAQCMZv3ZMMF0g/s192/Captura.jpg" type="image/jpeg">
     <link rel="apple-touch-icon" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgize0RtDFstsOqmadIDBs-S5ahWncPKEEQcA_D2NA4ER5XHJ49wP0UmBQIw-ggOr0PWcrvNB1ocGIlMHV1DbpR1JYvYUK4qYijToiiJJcgIDl-V_e_XyNiTWSNPu7anJWgIhLxFutIRfMOPLdmCoWyQFf7Rsykkig97NR2ByifjVsUIMAQCMZv3ZMMF0g/s192/Captura.jpg">
-    
-    <!-- Color de la barra del navegador en móvil para que combine con el fondo oscuro -->
     <meta name="theme-color" content="#111827">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Iconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Ajustes para scrollbar en modo oscuro */
-        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 2px; }
         .modal { transition: opacity 0.2s ease-in-out; }
         .hidden-modal { opacity: 0; pointer-events: none; }
         .visible-modal { opacity: 1; pointer-events: auto; }
@@ -38,41 +30,42 @@
 
     <!-- CABECERA -->
     <header class="bg-gray-800 shadow-lg z-20 border-b border-gray-700 shrink-0">
-        <!-- Imagen actualizada: object-contain para ver el vehículo completo, fondo oscuro para los lados -->
         <div class="w-full h-48 sm:h-64 bg-gray-900 relative flex justify-center items-center overflow-hidden">
             <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgize0RtDFstsOqmadIDBs-S5ahWncPKEEQcA_D2NA4ER5XHJ49wP0UmBQIw-ggOr0PWcrvNB1ocGIlMHV1DbpR1JYvYUK4qYijToiiJJcgIDl-V_e_XyNiTWSNPu7anJWgIhLxFutIRfMOPLdmCoWyQFf7Rsykkig97NR2ByifjVsUIMAQCMZv3ZMMF0g/w511-h286/Captura.jpg" 
                  alt="Logo" class="w-full h-full object-contain">
-            <!-- Degradado sutil para integrar la imagen con el menú inferior -->
             <div class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent pointer-events-none"></div>
         </div>
-        <div class="py-2 px-4 bg-indigo-900/90 backdrop-blur-md border-t border-indigo-800 flex justify-between items-center relative z-10 -mt-1">
-            <span class="text-blue-100 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Control de Salidas</span>
+        <div class="py-2 px-2 bg-indigo-900/90 backdrop-blur-md border-t border-indigo-800 flex justify-between items-center relative z-10 -mt-1">
+            <span class="text-blue-100 font-bold uppercase tracking-widest text-[9px] leading-tight">Control<br>Salidas</span>
             <div class="flex gap-2">
-                <button onclick="resetAllData()" class="flex items-center gap-1 bg-red-900/50 hover:bg-red-800 text-red-200 text-[10px] sm:text-xs px-3 py-1.5 rounded-full transition-colors font-medium border border-red-800/50">
-                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Reset
+                <button onclick="resetAllData()" class="flex items-center gap-1 bg-red-900/50 hover:bg-red-800 text-red-200 text-[10px] px-2 py-1 rounded-full border border-red-800/50">
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>
                 </button>
-                <button onclick="openUserModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-full transition-colors font-medium shadow-sm">
-                    <i data-lucide="users" class="w-3 h-3"></i> Gestionar Lista
+                <button onclick="openUserModal()" class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                    <i data-lucide="users" class="w-3 h-3"></i> Lista
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- GRID PRINCIPAL -->
-    <main class="flex-1 w-full p-1 overflow-hidden flex flex-col">
-        <div class="w-full bg-gray-800 border border-gray-700 shadow-2xl rounded-lg overflow-hidden flex flex-col h-full">
+    <!-- GRID PRINCIPAL (Sin Scroll Horizontal en Contenedor) -->
+    <main class="flex-1 w-full p-0.5 overflow-hidden flex flex-col">
+        <div class="w-full bg-gray-800 border border-gray-700 shadow-2xl rounded overflow-hidden flex flex-col h-full">
+            
             <!-- Encabezados -->
             <div id="headers-container" class="grid grid-cols-5 bg-gray-900 border-b border-gray-700 divide-x divide-gray-700 shrink-0">
-                <!-- Se llena con JS -->
+                <!-- JS llena esto -->
             </div>
+            
             <!-- Cuerpo Tabla -->
             <div id="grid-container" class="grid grid-cols-5 divide-x divide-gray-700 bg-gray-800 flex-1 overflow-y-auto">
-                <!-- Se llena con JS -->
+                <!-- JS llena esto -->
             </div>
+
         </div>
     </main>
 
-    <!-- MODAL ASIGNAR ASIENTO -->
+    <!-- MODALES (Sin cambios funcionales, solo estilo) -->
     <div id="modal-assignment" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal hidden-modal">
         <div class="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-sm flex flex-col max-h-[90vh]">
             <div class="bg-gray-900/50 px-4 py-3 border-b border-gray-700 flex justify-between items-center shrink-0">
@@ -80,70 +73,49 @@
                 <button onclick="closeModal('modal-assignment')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-4 space-y-4 overflow-y-auto">
-                <!-- Input Manual -->
                 <div>
                     <label class="text-xs font-bold text-gray-400 uppercase block mb-1.5">Nombre (Manual)</label>
-                    <input type="text" id="input-name" class="w-full bg-gray-900 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Escribir nombre...">
+                    <input type="text" id="input-name" class="w-full bg-gray-900 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nombre...">
                 </div>
-                <!-- Lista Rápida -->
                 <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase block mb-2 flex items-center gap-2">
-                        <i data-lucide="search" class="w-3 h-3"></i> Disponibles
-                    </label>
-                    <div id="quick-list" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 bg-gray-900/30 rounded-lg min-h-[3rem]">
-                        <!-- Se llena con JS -->
-                    </div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Disponibles</label>
+                    <div id="quick-list" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1 bg-gray-900/30 rounded-lg min-h-[3rem]"></div>
                 </div>
-                <!-- Colores -->
                 <div>
                     <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Color</label>
-                    <div class="grid grid-cols-4 gap-2" id="color-picker">
-                        <!-- Botones de color -->
-                    </div>
+                    <div class="grid grid-cols-4 gap-2" id="color-picker"></div>
                 </div>
             </div>
             <div class="p-4 bg-gray-900/50 border-t border-gray-700 flex gap-3 shrink-0">
-                <button id="btn-delete-assignment" onclick="deleteAssignment()" class="hidden p-3 text-red-400 hover:bg-red-900/20 rounded border border-red-900/30">
-                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                </button>
-                <button onclick="saveAssignment()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-500">
-                    Confirmar
-                </button>
+                <button id="btn-delete-assignment" onclick="deleteAssignment()" class="hidden p-3 text-red-400 hover:bg-red-900/20 rounded border border-red-900/30"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                <button onclick="saveAssignment()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-500">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL GESTIÓN USUARIOS -->
     <div id="modal-users" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 modal hidden-modal">
         <div class="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-sm flex flex-col max-h-[85vh]">
             <div class="bg-indigo-900/40 px-4 py-4 border-b border-indigo-500/30 flex justify-between items-center">
-                <h3 class="font-bold text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Lista de Usuarios</h3>
+                <h3 class="font-bold text-white flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Lista</h3>
                 <button onclick="closeModal('modal-users')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <div class="p-4 bg-gray-800/50 border-b border-gray-700">
                 <div class="flex gap-2">
                     <input type="text" id="input-new-user" class="flex-1 bg-gray-900 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none" placeholder="Nuevo usuario...">
-                    <button onclick="addUserToList()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-500">
-                        <i data-lucide="plus" class="w-5 h-5"></i>
-                    </button>
+                    <button onclick="addUserToList()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-500"><i data-lucide="plus" class="w-5 h-5"></i></button>
                 </div>
             </div>
-            <div id="users-list-container" class="flex-1 overflow-y-auto p-2 space-y-1">
-                <!-- Se llena con JS -->
-            </div>
-            <div id="users-count" class="p-3 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800">
-                0 usuarios registrados
-            </div>
+            <div id="users-list-container" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+            <div id="users-count" class="p-3 bg-gray-900/50 text-center text-xs text-gray-500 border-t border-gray-800"></div>
         </div>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT -->
     <script>
-        // --- CONSTANTES POR DEFECTO ---
+        // DATOS INICIALES
         const DEFAULT_USERS = [
-            { id: 'u1', nombre: 'Jorge' }, { id: 'u2', nombre: 'Ana' },
-            { id: 'u3', nombre: 'Carlos' }, { id: 'u4', nombre: 'Maria' },
-            { id: 'u5', nombre: 'Luis' }, { id: 'u6', nombre: 'Sofia' }
+            { id: 'u1', nombre: 'Marielos Margarita Elizabeth' }, // NOMBRE LARGO DE PRUEBA
+            { id: 'u2', nombre: 'Jorge' }, 
+            { id: 'u3', nombre: 'Carlos' }, { id: 'u4', nombre: 'Maria' }
         ];
 
         const DEFAULT_RIDES = [
@@ -154,7 +126,6 @@
             { id: 5, nombre: 'Carrera 5', pasajeros: [] }
         ];
 
-        // --- ESTADO (Se cargará desde LocalStorage) ---
         let listaUsuarios = [];
         let carreras = [];
 
@@ -167,46 +138,29 @@
 
         let tempState = { carreraId: null, passengerId: null, index: null, selectedColor: 'azul' };
 
-        // --- SISTEMA DE GUARDADO ---
-        
+        // GUARDADO LOCAL
         function loadData() {
-            const storedUsers = localStorage.getItem('transporte_users_v1');
-            const storedRides = localStorage.getItem('transporte_rides_v1');
-
-            if (storedUsers) {
-                listaUsuarios = JSON.parse(storedUsers);
-            } else {
-                listaUsuarios = JSON.parse(JSON.stringify(DEFAULT_USERS));
-            }
-
-            if (storedRides) {
-                carreras = JSON.parse(storedRides);
-            } else {
-                carreras = JSON.parse(JSON.stringify(DEFAULT_RIDES));
-            }
+            const storedUsers = localStorage.getItem('transporte_users_v2');
+            const storedRides = localStorage.getItem('transporte_rides_v2');
+            listaUsuarios = storedUsers ? JSON.parse(storedUsers) : JSON.parse(JSON.stringify(DEFAULT_USERS));
+            carreras = storedRides ? JSON.parse(storedRides) : JSON.parse(JSON.stringify(DEFAULT_RIDES));
         }
 
         function saveData() {
-            localStorage.setItem('transporte_users_v1', JSON.stringify(listaUsuarios));
-            localStorage.setItem('transporte_rides_v1', JSON.stringify(carreras));
+            localStorage.setItem('transporte_users_v2', JSON.stringify(listaUsuarios));
+            localStorage.setItem('transporte_rides_v2', JSON.stringify(carreras));
         }
 
         function resetAllData() {
-            if(confirm('¿Borrar todos los datos y reiniciar de fábrica?')) {
-                localStorage.removeItem('transporte_users_v1');
-                localStorage.removeItem('transporte_rides_v1');
+            if(confirm('¿Reiniciar datos?')) {
+                localStorage.removeItem('transporte_users_v2');
+                localStorage.removeItem('transporte_rides_v2');
                 location.reload();
             }
         }
 
-        // --- FUNCIONES UI ---
-
-        function init() {
-            loadData(); // Cargar datos al inicio
-            renderGrid();
-            renderUserList();
-            lucide.createIcons();
-        }
+        // RENDERIZADO
+        function init() { loadData(); renderGrid(); renderUserList(); lucide.createIcons(); }
 
         function renderGrid() {
             const headerContainer = document.getElementById('headers-container');
@@ -215,30 +169,33 @@
             headerContainer.innerHTML = '';
             gridContainer.innerHTML = '';
 
+            // Headers Compactos
             carreras.forEach(c => {
                 headerContainer.innerHTML += `
-                    <div class="py-2 px-0.5 text-center overflow-hidden">
-                        <div class="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Salida</div>
-                        <div class="font-bold text-gray-200 text-[10px] sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                    <div class="py-2 px-0.5 text-center overflow-hidden bg-gray-900">
+                        <div class="text-[8px] text-gray-400 uppercase font-bold tracking-tighter">Salida</div>
+                        <div class="font-bold text-gray-200 text-[10px] whitespace-nowrap overflow-hidden text-ellipsis">
                             ${c.nombre.replace('Carrera', 'C')}
                         </div>
                     </div>`;
             });
 
+            // Columnas
             carreras.forEach(c => {
-                let columnHtml = `<div class="divide-y divide-gray-700">`;
+                let columnHtml = `<div class="divide-y divide-gray-700 bg-gray-800 h-full">`;
                 const slots = [...c.pasajeros];
                 while(slots.length < 4) slots.push(null);
                 const finalSlots = slots.slice(0, 4);
 
                 finalSlots.forEach((p, idx) => {
+                    // CAMBIO: Reduje altura de h-28 a h-16 (64px) para que sea menos gruesa
                     if (p) {
                         const color = SEAT_COLORS.find(col => col.id === p.colorId) || SEAT_COLORS[0];
                         columnHtml += `
                             <div onclick="openAssignmentModal(${c.id}, '${p.id}', ${idx}, '${p.nombre}', '${p.colorId}')" 
-                                 class="h-20 sm:h-28 p-1 sm:p-2 transition-all cursor-pointer relative group">
-                                <div class="w-full h-full rounded border-l-4 shadow-md flex items-center justify-center text-center overflow-hidden ${color.bg} ${color.border} hover:opacity-90">
-                                    <span class="text-xs sm:text-sm font-bold leading-tight line-clamp-3 px-1 break-words w-full ${color.text} uppercase tracking-tight">
+                                 class="h-16 p-0.5 transition-all cursor-pointer relative group flex items-stretch">
+                                <div class="w-full h-full rounded border-l-[3px] shadow-sm flex items-center justify-center text-center overflow-hidden ${color.bg} ${color.border} hover:opacity-90 px-0.5">
+                                    <span class="text-[9px] font-bold leading-tight break-words w-full ${color.text} uppercase tracking-tighter line-clamp-4">
                                         ${p.nombre}
                                     </span>
                                 </div>
@@ -246,9 +203,9 @@
                     } else {
                         columnHtml += `
                             <div onclick="openAssignmentModal(${c.id}, null, ${idx})" 
-                                 class="h-20 sm:h-28 p-1 sm:p-2 transition-all cursor-pointer relative group hover:bg-gray-700/50">
-                                <div class="w-full h-full border border-dashed border-gray-600 rounded flex flex-col items-center justify-center text-gray-600 hover:text-gray-400 hover:border-gray-500 transition-colors">
-                                    <span class="text-2xl font-light opacity-50">+</span>
+                                 class="h-16 p-0.5 transition-all cursor-pointer relative group hover:bg-gray-700/50 flex items-stretch">
+                                <div class="w-full h-full border border-dashed border-gray-700 rounded flex flex-col items-center justify-center text-gray-600 hover:text-gray-400 hover:border-gray-500 transition-colors">
+                                    <span class="text-lg font-light opacity-30">+</span>
                                 </div>
                             </div>`;
                     }
@@ -259,33 +216,16 @@
             lucide.createIcons();
         }
 
-        // --- GESTIÓN DE MODALES ---
-
-        function openModal(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('hidden-modal');
-            el.classList.add('visible-modal');
-        }
-
-        function closeModal(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('visible-modal');
-            el.classList.add('hidden-modal');
-        }
-
-        // --- LÓGICA DE ASIGNACIÓN ---
+        // --- LÓGICA DE NEGOCIO (IGUAL) ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden-modal'); document.getElementById(id).classList.add('visible-modal'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('visible-modal'); document.getElementById(id).classList.add('hidden-modal'); }
 
         function openAssignmentModal(cId, pId, idx, pName = '', pColor = 'azul') {
             tempState = { carreraId: cId, passengerId: pId, index: idx, selectedColor: pColor };
             document.getElementById('input-name').value = pName;
-            
             const btnDelete = document.getElementById('btn-delete-assignment');
-            if (pId) btnDelete.classList.remove('hidden');
-            else btnDelete.classList.add('hidden');
-
-            renderColorPicker();
-            renderQuickList();
-            openModal('modal-assignment');
+            pId ? btnDelete.classList.remove('hidden') : btnDelete.classList.add('hidden');
+            renderColorPicker(); renderQuickList(); openModal('modal-assignment');
         }
 
         function renderColorPicker() {
@@ -295,142 +235,66 @@
                 const isSelected = tempState.selectedColor === c.id;
                 const borderStyle = isSelected ? 'ring-2 ring-white scale-110 z-10' : 'opacity-60';
                 const checkIcon = isSelected ? `<i data-lucide="check" class="w-4 h-4 ${c.id === 'amarillo' ? 'text-black' : 'text-white'}"></i>` : '';
-                
-                container.innerHTML += `
-                    <button onclick="selectColor('${c.id}')" 
-                            class="h-10 rounded border-2 flex items-center justify-center transition-all ${c.bg} ${c.border} ${borderStyle}">
-                        ${checkIcon}
-                    </button>`;
+                container.innerHTML += `<button onclick="selectColor('${c.id}')" class="h-10 rounded border-2 flex items-center justify-center transition-all ${c.bg} ${c.border} ${borderStyle}">${checkIcon}</button>`;
             });
             lucide.createIcons();
         }
 
-        function selectColor(id) {
-            tempState.selectedColor = id;
-            renderColorPicker();
-        }
+        function selectColor(id) { tempState.selectedColor = id; renderColorPicker(); }
 
         function renderQuickList() {
             const container = document.getElementById('quick-list');
             container.innerHTML = '';
-            
             const ocupados = new Set();
-            carreras.forEach(c => c.pasajeros.forEach(p => {
-                if(p && p.nombre) ocupados.add(p.nombre.toLowerCase());
-            }));
-
+            carreras.forEach(c => c.pasajeros.forEach(p => { if(p && p.nombre) ocupados.add(p.nombre.toLowerCase()); }));
             const currentName = document.getElementById('input-name').value.toLowerCase();
             const disponibles = listaUsuarios.filter(u => !ocupados.has(u.nombre.toLowerCase()) || u.nombre.toLowerCase() === currentName);
-
-            if(disponibles.length === 0) {
-                container.innerHTML = `<span class="text-gray-500 text-xs italic w-full text-center py-2">Todos asignados.</span>`;
-                return;
-            }
-
+            
+            if(disponibles.length === 0) { container.innerHTML = `<span class="text-gray-500 text-xs italic w-full text-center py-2">Todos asignados.</span>`; return; }
             disponibles.forEach(u => {
                 const isSelected = document.getElementById('input-name').value === u.nombre;
                 const style = isSelected ? 'bg-blue-600 border-blue-400 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600';
-                container.innerHTML += `
-                    <button onclick="selectQuickUser('${u.nombre}')" class="text-xs px-3 py-1.5 rounded-full border transition-all ${style}">
-                        ${u.nombre}
-                    </button>`;
+                container.innerHTML += `<button onclick="selectQuickUser('${u.nombre}')" class="text-[10px] px-2 py-1 rounded-full border transition-all ${style}">${u.nombre}</button>`;
             });
         }
 
-        function selectQuickUser(name) {
-            document.getElementById('input-name').value = name;
-            renderQuickList();
-        }
+        function selectQuickUser(name) { document.getElementById('input-name').value = name; renderQuickList(); }
 
         function saveAssignment() {
             const name = document.getElementById('input-name').value.trim();
             if (!name) return;
-
             const carrera = carreras.find(c => c.id === tempState.carreraId);
-            
-            while(carrera.pasajeros.length <= tempState.index) {
-                carrera.pasajeros.push(null);
-            }
-
-            const newPassenger = {
-                id: tempState.passengerId || Date.now().toString(),
-                nombre: name,
-                colorId: tempState.selectedColor
-            };
-
-            if (tempState.passengerId) {
-                carrera.pasajeros = carrera.pasajeros.map(p => (p && p.id === tempState.passengerId) ? newPassenger : p);
-            } else {
-                const clean = carrera.pasajeros.filter(p => p !== null);
-                if (clean.length < 4) clean.push(newPassenger);
-                carrera.pasajeros = clean;
-            }
-
-            saveData(); // GUARDAR CAMBIOS
-            renderGrid();
-            closeModal('modal-assignment');
+            while(carrera.pasajeros.length <= tempState.index) carrera.pasajeros.push(null);
+            const newPassenger = { id: tempState.passengerId || Date.now().toString(), nombre: name, colorId: tempState.selectedColor };
+            if (tempState.passengerId) { carrera.pasajeros = carrera.pasajeros.map(p => (p && p.id === tempState.passengerId) ? newPassenger : p); }
+            else { const clean = carrera.pasajeros.filter(p => p !== null); if (clean.length < 4) clean.push(newPassenger); carrera.pasajeros = clean; }
+            saveData(); renderGrid(); closeModal('modal-assignment');
         }
 
         function deleteAssignment() {
             if (!tempState.passengerId) return;
             const carrera = carreras.find(c => c.id === tempState.carreraId);
             carrera.pasajeros = carrera.pasajeros.filter(p => p.id !== tempState.passengerId);
-            
-            saveData(); // GUARDAR CAMBIOS
-            renderGrid();
-            closeModal('modal-assignment');
+            saveData(); renderGrid(); closeModal('modal-assignment');
         }
 
-        // --- GESTIÓN DE USUARIOS ---
-
-        function openUserModal() {
-            renderUserList();
-            openModal('modal-users');
-        }
-
+        function openUserModal() { renderUserList(); openModal('modal-users'); }
         function renderUserList() {
             const container = document.getElementById('users-list-container');
             const countEl = document.getElementById('users-count');
             container.innerHTML = '';
-            
-            if (listaUsuarios.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">No hay usuarios.</p>`;
-            } else {
-                listaUsuarios.forEach(u => {
-                    container.innerHTML += `
-                        <div class="flex justify-between items-center bg-gray-700/40 p-3 rounded-lg border border-gray-700/50 group">
-                            <span class="text-gray-200 font-medium">${u.nombre}</span>
-                            <button onclick="deleteUser('${u.id}')" class="text-gray-500 hover:text-red-400 p-1">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>`;
-                });
-            }
-            countEl.innerText = `${listaUsuarios.length} usuarios registrados`;
-            lucide.createIcons();
+            if (listaUsuarios.length === 0) container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">Vacío</p>`;
+            else listaUsuarios.forEach(u => container.innerHTML += `<div class="flex justify-between items-center bg-gray-700/40 p-2 rounded border border-gray-700/50 mb-1"><span class="text-gray-200 text-sm font-medium">${u.nombre}</span><button onclick="deleteUser('${u.id}')" class="text-gray-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`);
+            countEl.innerText = `${listaUsuarios.length} usuarios`; lucide.createIcons();
         }
-
         function addUserToList() {
             const input = document.getElementById('input-new-user');
             const name = input.value.trim();
             if (!name) return;
-            
-            const exists = listaUsuarios.some(u => u.nombre.toLowerCase() === name.toLowerCase());
-            if (!exists) {
-                listaUsuarios.push({ id: Date.now().toString(), nombre: name });
-                input.value = '';
-                saveData(); // GUARDAR CAMBIOS
-                renderUserList();
-            }
+            if (!listaUsuarios.some(u => u.nombre.toLowerCase() === name.toLowerCase())) { listaUsuarios.push({ id: Date.now().toString(), nombre: name }); input.value = ''; saveData(); renderUserList(); }
         }
+        function deleteUser(id) { listaUsuarios = listaUsuarios.filter(u => u.id !== id); saveData(); renderUserList(); }
 
-        function deleteUser(id) {
-            listaUsuarios = listaUsuarios.filter(u => u.id !== id);
-            saveData(); // GUARDAR CAMBIOS
-            renderUserList();
-        }
-
-        // Inicializar
         init();
     </script>
 </body>
